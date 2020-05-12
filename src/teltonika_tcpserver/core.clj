@@ -1,5 +1,7 @@
 (ns teltonika-tcpserver.core)
 
+(require '[clojure.set :as set])
+
 (use 'teltonika-tcpserver.server)
 
 (defn bytes->int [bytes]
@@ -47,19 +49,48 @@
 (defn number-of-data-1 [input]
   {:number-of-data-1 (read-int input 1)})
 
-(defn avl-data [input avl-length] (read-bytes [input]))
-
 (def preAvlDataFunctions [imei preamable data-field-length codec-id number-of-data-1])
+
+(defn to-coordinate [longitude-int] (/ (double longitude-int) 10000000))
+
+(defn avl-data [stream avl-length] 
+  {:avl-data 
+    {:timestamp (read-int stream 8)
+     :priority (read-int stream 1)
+     :gps-element {
+       :longitude (to-coordinate (read-int stream 4))
+       :latitude (to-coordinate (read-int stream 4))
+       :altitude (read-int stream 2)
+       :satelites (read-int stream 1)
+       :speed (read-int stream 2)
+     }
+     :io-element (read-bytes stream (- avl-length 22))
+    }})
 
 (defn preAvlPacketData [inputStream outputStream] 
   (into {} (for [x (range 0 (count preAvlDataFunctions))] 
     ((get preAvlDataFunctions x) inputStream))))
 
+(defn crc-16 [inputStream] {:crc-16 (read-int inputStream 4)})
+
+(defn parse-packet [inputStream outputStream] 
+  (let [preAvlData (preAvlPacketData inputStream outputStream)]
+    (conj
+      preAvlData 
+      (avl-data inputStream (- (:data-field-length preAvlData) 3))
+      (set/rename-keys (number-of-data-1 inputStream) {:number-of-data-1 :number-of-data-2})
+      (crc-16 inputStream)
+      ) 
+  ))
+
+(defn postAvlPacketData [inputStream outputStream]
+  (println (parse-packet inputStream outputStream))
+  )
+
 (defn handler [inputStream outputStream]
-  (println (preAvlPacketData inputStream outputStream)))
+ (println (postAvlPacketData inputStream outputStream)))
 
 
-  ;(conj (imei inputStream) (preamable inputStream))
 
 (def server
   (tcp-server 
