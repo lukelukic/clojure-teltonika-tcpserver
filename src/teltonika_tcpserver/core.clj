@@ -1,94 +1,83 @@
 (ns teltonika-tcpserver.core)
 
-(require '[clojure.set :as set])
+(require '[clojure.set :as set]
+         '[teltonika_tcpserver.conversion :as con]
+         '[teltonika_tcpserver.ioelement :as ioe]
+         '[clojure.data.json :as json])
 
 (use 'teltonika-tcpserver.server)
 
-(defn bytes->int [bytes]
-  "Converts a byte array into an integer."
-  (->> 
-    bytes 
-    (map (partial format "%02x")) 
-    (apply (partial str "0x"))
-    read-string))
-
-(defn bytes->string [bytes]
-  (apply str (map #(char (bit-and % 255)) bytes)))
-
-(defn read-bytes 
-  ([stream length]  
-    (let 
-      [buffer (byte-array length)]
-      (.read stream buffer 0 length) 
-        buffer))
-  ([stream length bytes-to] 
-    (bytes-to (read-bytes stream length))))
-
-
-(defn read-string [stream length]
-  (read-bytes stream length bytes->string))
-
-(defn read-int [stream length]
-  (read-bytes stream length bytes->int))
+(defn arities [f]
+  (let [m (first (.getDeclaredMethods (class f)))
+        p (.getParameterTypes m)]
+    (alength p)))
 
 (defn imei-length [input] 
-  (read-int input 2))
+  (con/read-int input 2))
 
-(defn imei [input] 
-  {:imei (read-string input (imei-length input))})
+(defn imei? [input output] 
+  (let [response {:imei (con/read-string input (imei-length input))}]
+    (.write output (byte-array [0x00 0x01]) 0 2)
+    response))
 
 (defn preamable [input]
-  {:preamble (read-int input 4)})
+  {:preamble (con/read-int input 4)})
 
 (defn data-field-length [input] 
-  {:data-field-length (read-int input 4)})
+  {:data-field-length (con/read-int input 4)})
 
 (defn codec-id [input] 
-  {:codec-id (read-int input 1)})
+  {:codec-id (con/read-int input)})
 
 (defn number-of-data-1 [input]
-  {:number-of-data-1 (read-int input 1)})
+  {:number-of-data-1 (con/read-int input)})
 
-(def preAvlDataFunctions [imei preamable data-field-length codec-id number-of-data-1])
+(defn number-of-data-2 [input] 
+  {:number-of-data-2 (con/read-int input)})
+
+(def preAvlDataFunctions [imei? preamable data-field-length codec-id number-of-data-1])
 
 (defn to-coordinate [longitude-int] (/ (double longitude-int) 10000000))
 
 (defn avl-data [stream avl-length] 
   {:avl-data 
-    {:timestamp (read-int stream 8)
-     :priority (read-int stream 1)
+    {:timestamp (con/read-int stream 8)
+     :priority (con/read-int stream 1)
      :gps-element {
-       :longitude (to-coordinate (read-int stream 4))
-       :latitude (to-coordinate (read-int stream 4))
-       :altitude (read-int stream 2)
-       :satelites (read-int stream 1)
-       :speed (read-int stream 2)
+       :longitude (to-coordinate (con/read-int stream 4))
+       :latitude (to-coordinate (con/read-int stream 4))
+       :altitude (con/read-int stream 2)
+       :angle (con/read-int stream 2)
+       :satelites (con/read-int stream)
+       :speed (con/read-int stream 2)
      }
-     :io-element (read-bytes stream (- avl-length 22))
+     :io-element (ioe/read stream)
     }})
 
 (defn preAvlPacketData [inputStream outputStream] 
   (into {} (for [x (range 0 (count preAvlDataFunctions))] 
-    ((get preAvlDataFunctions x) inputStream))))
+    (let [func (get preAvlDataFunctions x)]
+      (if (= (arities func) 2) ; this is a specific situation - here we're checking if the function needs both input and outputstream by inspecting it's argument count
+          (func inputStream outputStream)
+          (func inputStream))
+    )
+    )))
 
-(defn crc-16 [inputStream] {:crc-16 (read-int inputStream 4)})
+(defn crc-16 [inputStream] {:crc-16 (con/read-int inputStream 4)})
 
 (defn parse-packet [inputStream outputStream] 
   (let [preAvlData (preAvlPacketData inputStream outputStream)]
     (conj
       preAvlData 
       (avl-data inputStream (- (:data-field-length preAvlData) 3))
-      (set/rename-keys (number-of-data-1 inputStream) {:number-of-data-1 :number-of-data-2})
+      (number-of-data-2 inputStream)
       (crc-16 inputStream)
       ) 
   ))
 
-(defn postAvlPacketData [inputStream outputStream]
-  (println (parse-packet inputStream outputStream))
-  )
 
 (defn handler [inputStream outputStream]
- (println (postAvlPacketData inputStream outputStream)))
+  (println (json/write-str (parse-packet inputStream outputStream))))
 
 
 
@@ -97,4 +86,4 @@
     :port    5001
     :handler (wrap-streams handler)))
 
-;(start server)
+(start server)

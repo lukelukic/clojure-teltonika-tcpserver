@@ -39,8 +39,9 @@
     [{:keys [handler connections socket] :as server}]
     (let [conn (.accept @socket)]
       (swap! connections conj conn)
+      (future
         (try (handler conn)
-             (finally (close-socket server conn)))))
+              (finally (close-socket server conn))))))
   
   (defn running?
     "True if the server is running."
@@ -52,10 +53,12 @@
     "Start a TCP server going."
     [server]
     (open-server-socket server)
+    (future
       (while (running? server)
         (try
           (accept-connection server)
-          (catch SocketException _))))
+          (catch SocketException _)))))
+  
   
   (defn stop
     "Stop the TCP server and close all open connections."
