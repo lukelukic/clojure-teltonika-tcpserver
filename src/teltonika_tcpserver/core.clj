@@ -79,11 +79,9 @@
 (defn handler [inputStream outputStream]
   (println (json/write-str (parse-packet inputStream outputStream))))
 
-
-
 (def server
   (tcp-server 
-    :port    5001
+    :port    5002
     :handler (wrap-streams handler)))
 
 (start server)
