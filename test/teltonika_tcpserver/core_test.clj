@@ -1,7 +1,20 @@
-(ns teltonika-tcpserver.core-test
-  (:require [clojure.test :refer :all]
-            [teltonika-tcpserver.core :refer :all]))
+(ns teltonika-tcpserver.core-test)
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+
+(require '[clojure.set :as set]
+         '[teltonika_tcpserver.conversion :as con]
+         '[teltonika_tcpserver.ioelement :as ioe]
+         '[clojure.data.json :as json]
+         '[clojure.java.io :as io]
+         '[teltonika-tcpserver.core :as core])
+
+(use 'clojure.test)
+
+(def sample-packet (byte-array [0x00 0x0f 0x33 0x35 0x36 0x33 0x30 0x37 0x30 0x34 0x32 0x34 0x34 0x31 0x30 0x31 0x33 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x36 0x08 0x01 0x00 0x00 0x01 0x6b 0x40 0xd8 0xea 0x30 0x01 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x01 0x05 0x02 0x15 0x03 0x01 0x01 0x01 0x42 0x5e 0x0f 0x01 0xf1 0x00 0x00 0x60 0x1a 0x01
+  0x4e 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x01 0x00 0x00 0xc7 0xcf]))
+
+(def sample-stream (io/input-stream sample-packet))
+
+(def sample-output-stream (java.io.ByteArrayOutputStream.))
+
+(deftest parsing-test (is (= (json/write-str (core/parse-packet sample-stream sample-output-stream)) "{\"imei\":\"356307042441013\",\"preamble\":0,\"data-field-length\":54,\"codec-id\":8,\"number-of-data-1\":1,\"avl-data\":{\"timestamp\":1560161086000,\"priority\":1,\"gps-element\":{\"longitude\":0.0,\"latitude\":0.0,\"altitude\":0,\"angle\":0,\"satelites\":0,\"speed\":0},\"io-element\":{\"eventIoId\":1,\"N\":5,\"N1\":[{\"id\":21,\"name\":\"GSM Signal\",\"value\":3},{\"id\":1,\"name\":\"Digital Input 1\",\"value\":1}],\"N2\":[{\"id\":66,\"name\":\"External Voltage\",\"value\":2.4079E7}],\"N4\":[{\"id\":241,\"name\":\"GSM Operator\",\"value\":24602}],\"N8\":[{\"id\":78,\"name\":\"iButton\",\"value\":0}]}},\"number-of-data-2\":1,\"crc-16\":51151}")))

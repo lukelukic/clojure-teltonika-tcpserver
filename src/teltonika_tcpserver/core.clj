@@ -3,7 +3,8 @@
 (require '[clojure.set :as set]
          '[teltonika_tcpserver.conversion :as con]
          '[teltonika_tcpserver.ioelement :as ioe]
-         '[clojure.data.json :as json])
+         '[clojure.data.json :as json]
+         '[clojure.java.io :as io])
 
 (use 'teltonika-tcpserver.server)
 
@@ -83,5 +84,6 @@
   (tcp-server 
     :port    5002
     :handler (wrap-streams handler)))
+
 
 (start server)
