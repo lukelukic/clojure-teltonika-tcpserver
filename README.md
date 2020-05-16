@@ -1,10 +1,7 @@
 # teltonika-tcpserver
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library designed to work parse teltonika FMB[XXX] modems working using Codec 8 or Codec 8 Extended.\
 
-## Usage
-
-FIXME
 
 ## License
 
