@@ -16,9 +16,12 @@
 (defn imei-length [input] 
   (con/read-int input 2))
 
+(defn accept-modem [output]
+  (.write output (byte-array [0x00 0x01]) 0 2))
+
 (defn imei? [input output] 
   (let [response {:imei (con/read-string input (imei-length input))}]
-    (.write output (byte-array [0x00 0x01]) 0 2)
+    (accept-modem output)
     response))
 
 (defn preamable [input]
@@ -40,9 +43,8 @@
 
 (defn to-coordinate [longitude-int] (/ (double longitude-int) 10000000))
 
-(defn avl-data [stream avl-length] 
-  {:avl-data 
-    {:timestamp (con/read-int stream 8)
+(defn parse-avl-packet [stream]
+  {:timestamp (con/read-int stream 8)
      :priority (con/read-int stream 1)
      :gps-element {
        :longitude (to-coordinate (con/read-int stream 4))
@@ -53,7 +55,13 @@
        :speed (con/read-int stream 2)
      }
      :io-element (ioe/read stream)
-    }})
+    })
+
+(defn avl-data [stream packet-count] 
+  {:avl-data (into [] (for [x (range 0 packet-count)] 
+              (parse-avl-packet stream)      
+  ))
+  })
 
 (defn preAvlPacketData [inputStream outputStream] 
   (into {} (for [x (range 0 (count preAvlDataFunctions))] 
@@ -61,8 +69,7 @@
       (if (= (arities func) 2) ; this is a specific situation - here we're checking if the function needs both input and outputstream by inspecting it's argument count
           (func inputStream outputStream)
           (func inputStream))
-    )
-    )))
+    ))))
 
 (defn crc-16 [inputStream] {:crc-16 (con/read-int inputStream 4)})
 
@@ -70,9 +77,10 @@
   (let [preAvlData (preAvlPacketData inputStream outputStream)]
     (conj
       preAvlData 
-      (avl-data inputStream (- (:data-field-length preAvlData) 3))
+      (avl-data inputStream (:number-of-data-1 preAvlData))
       (number-of-data-2 inputStream)
       (crc-16 inputStream)
+      (.write outputStream (byte-array [0x00 0x00 0x00 (:number-of-data-1 preAvlData)]) 0 4)
       ) 
   ))
 
@@ -86,4 +94,7 @@
     :handler (wrap-streams handler)))
 
 
-(start server)
+(defn -main 
+  []
+  (println "Starting a Teltonika Codec8/Codec8Extended TCP Server.")
+  (start server))
