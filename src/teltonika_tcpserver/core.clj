@@ -19,7 +19,7 @@
   (.write output (byte-array [0x00 0x01]) 0 2))
 
 (defn imei? [input output]
-  (let [response {:imei (con/read-string
+  (let [response {:imei (con/read-text
                          input
                          (imei-length input))}]
     (accept-modem output)

@@ -1,14 +1,5 @@
 (ns teltonika_tcpserver.conversion)
 
-(defn bytes->int
-  [bytes]
-  "Converts a byte array into an integer."
-  (->>
-   bytes
-   (map (partial format "%02x"))
-   (apply (partial str "0x"))
-   read-string))
-
 (defn bytes->string
   [bytes]
   (apply
@@ -23,9 +14,18 @@
   ([stream length bytes-to]
    (bytes-to (read-bytes stream length))))
 
-(defn read-string
+(defn read-text
   [stream length]
   (read-bytes stream length bytes->string))
+
+(defn bytes->int
+  [bytes]
+  "Converts a byte array into an integer."
+  (->>
+   bytes
+   (map (partial format "%02x"))
+   (apply (partial str "0x"))
+   read-string))
 
 (defn read-int
   ([stream]
