@@ -62,7 +62,8 @@
 (defn preAvlPacketData [inputStream outputStream]
   (into {} (for [x (range 0 (count preAvlDataFunctions))]
              (let [func (get preAvlDataFunctions x)]
-               (if (= (arities func) 2) ; this is a specific situation - here we're checking if the function needs both input and outputstream by inspecting it's argument count
+               ;; this is a specific situation - here we're checking if the function needs both input and outputstream by inspecting it's argument count
+               (if (= (arities func) 2)
                  (func inputStream outputStream)
                  (func inputStream))))))
 
