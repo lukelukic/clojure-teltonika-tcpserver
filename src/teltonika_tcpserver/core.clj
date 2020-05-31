@@ -1,5 +1,5 @@
 (ns teltonika-tcpserver.core
-  (:require 
+  (:require
    [clojure.set :as set]
    [teltonika_tcpserver.conversion :as con]
    [teltonika_tcpserver.ioelement :as ioe]
@@ -19,8 +19,8 @@
   (.write output (byte-array [0x00 0x01]) 0 2))
 
 (defn imei? [input output]
-  (let [response {:imei (con/read-string 
-                         input 
+  (let [response {:imei (con/read-string
+                         input
                          (imei-length input))}]
     (accept-modem output)
     response))

@@ -1,5 +1,5 @@
 (ns teltonika_tcpserver.ioelement
-  (:require 
+  (:require
    [teltonika_tcpserver.conversion :as con]
    [teltonika_tcpserver.codecmap :as cmap]))
 

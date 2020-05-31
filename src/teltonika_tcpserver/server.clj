@@ -3,7 +3,8 @@
   (:require [clojure.java.io :as io])
   (:import [java.net InetAddress ServerSocket Socket SocketException]))
 
-(defn- server-socket [server]
+(defn- server-socket
+  [server]
   (ServerSocket.
    (:port server)
    (:backlog server)
@@ -26,12 +27,14 @@
     :connections (atom #{})}
    options))
 
-(defn close-socket [server socket]
+(defn close-socket
+  [server socket]
   (swap! (:connections server) disj socket)
   (when-not (.isClosed socket)
     (.close socket)))
 
-(defn- open-server-socket [server]
+(defn- open-server-socket
+  [server]
   (reset! (:socket server)
           (server-socket server)))
 
