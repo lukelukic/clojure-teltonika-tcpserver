@@ -15,20 +15,20 @@
      (= elementsCount 0)
       returningMap
       (vec (for
-                [i (range 0 elementsCount)]
-                 (let [ioElement {:id (con/read-int inputStream)
-                                  :value (con/read-int inputStream n-number)}
-                       ioElementDefinition (find-element (:id ioElement))]
+            [i (range 0 elementsCount)]
+             (let [ioElement {:id (con/read-int inputStream)
+                              :value (con/read-int inputStream n-number)}
+                   ioElementDefinition (find-element (:id ioElement))]
 
-                   {:id (:id ioElement)
-                    :name (if 
-                           (nil? (:name ioElementDefinition)) 
-                           "Untracked" 
-                           (:name ioElementDefinition))
-                    :value (if
-                            (nil? (:multiplier ioElementDefinition))
-                            (:value ioElement)
-                            (/ (:value ioElement) (:multiplier ioElementDefinition)))}))))))
+               {:id (:id ioElement)
+                :name (if
+                       (nil? (:name ioElementDefinition))
+                        "Untracked"
+                        (:name ioElementDefinition))
+                :value (if
+                        (nil? (:multiplier ioElementDefinition))
+                         (:value ioElement)
+                         (/ (:value ioElement) (:multiplier ioElementDefinition)))}))))))
 
 (defn read-stream
   [inputStream]
