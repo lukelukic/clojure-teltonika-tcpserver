@@ -28,7 +28,7 @@
   (read-bytes stream length bytes->string))
 
 (defn read-int
-  ([stream length]
-   (read-bytes stream length bytes->int))
   ([stream]
-   (read-bytes stream 1 bytes->int)))
+   (read-bytes stream 1 bytes->int))
+  ([stream length]
+   (read-bytes stream length bytes->int)))
