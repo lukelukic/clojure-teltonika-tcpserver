@@ -3,7 +3,7 @@
    [clojure.set :as set]
    [teltonika_tcpserver.conversion :as con]
    [teltonika_tcpserver.ioelement :as ioe]
-   [teltonika-tcpserver.server :as tcp]
+   [teltonika-tcpserver.server :as TCP]
    [clojure.data.json :as json]
    [clojure.java.io :as io]))
 
@@ -81,11 +81,11 @@
   (println (json/write-str (parse-packet inputStream outputStream))))
 
 (def server
-  (tcp/tcp-server
+  (TCP/tcp-server
    :port    5002
-   :handler (tcp/wrap-streams handler)))
+   :handler (TCP/wrap-streams handler)))
 
 (defn -main
   []
   (println "Starting a Teltonika Codec8/Codec8Extended TCP Server.")
-  (tcp/start server))
+  (TCP/start server))
