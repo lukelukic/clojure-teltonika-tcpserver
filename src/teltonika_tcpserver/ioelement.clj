@@ -14,7 +14,7 @@
     (if
      (= elementsCount 0)
       returningMap
-      (into [] (for
+      (vec (for
                 [i (range 0 elementsCount)]
                  (let [ioElement {:id (con/read-int inputStream)
                                   :value (con/read-int inputStream n-number)}
