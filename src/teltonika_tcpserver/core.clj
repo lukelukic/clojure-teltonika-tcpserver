@@ -53,7 +53,7 @@
                  :angle (con/read-int stream 2)
                  :satelites (con/read-int stream)
                  :speed (con/read-int stream 2)}
-   :io-element (ioe/read stream)})
+   :io-element (ioe/read-stream stream)})
 
 (defn avl-data [stream packet-count]
   {:avl-data (into [] (for [x (range 0 packet-count)]

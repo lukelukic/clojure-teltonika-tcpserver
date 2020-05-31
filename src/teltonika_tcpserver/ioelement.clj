@@ -30,7 +30,7 @@
                             (:value ioElement)
                             (/ (:value ioElement) (:multiplier ioElementDefinition)))}))))))
 
-(defn read
+(defn read-stream
   [inputStream]
   (let [eventIoId (con/read-int inputStream)
         N (con/read-int inputStream)]
